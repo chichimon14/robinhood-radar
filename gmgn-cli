@@ -1,0 +1,2 @@
+#!/bin/bash
+exec node "/Users/julian/antigravity/gmgn/gmgn-skills/dist/index.js" "$@"
