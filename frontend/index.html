@@ -89,7 +89,7 @@
       </div>
     </div>
 
-    <!-- 3步流水线向导导航 Tab 栏（固定） -->
+    <!-- 2步流水线向导导航 Tab 栏（固定） -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 bg-gray-950/60 border-t border-gray-800/80 flex items-center justify-between text-xs sm:text-sm overflow-x-auto gap-2">
       <div class="flex items-center space-x-2 sm:space-x-4 w-full">
         <!-- Step 1 Tab -->
@@ -104,17 +104,8 @@
         <!-- Step 2 Tab -->
         <button id="stepNav2" onclick="switchView('page2')" class="flex-1 py-1.5 px-3 rounded-lg border border-gray-800 bg-gray-900/60 text-gray-400 hover:text-gray-200 transition flex items-center justify-center gap-2 font-medium">
           <span class="w-4 h-4 rounded-full bg-gray-800 text-gray-400 text-xs flex items-center justify-center font-bold">2</span>
-          <span>提取内盘聪明钱包</span>
+          <span>提取内盘聪明钱包与入库</span>
           <span id="page2Badge" class="hidden px-1.5 py-0.2 rounded-full bg-green-500/20 text-green-400 text-xs border border-green-500/30">0</span>
-        </button>
-
-        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-gray-600 hidden sm:block"></i>
-
-        <!-- Step 3 Tab -->
-        <button id="stepNav3" onclick="switchView('page3')" class="flex-1 py-1.5 px-3 rounded-lg border border-gray-800 bg-gray-900/60 text-gray-400 hover:text-gray-200 transition flex items-center justify-center gap-2 font-medium">
-          <span class="w-4 h-4 rounded-full bg-gray-800 text-gray-400 text-xs flex items-center justify-center font-bold">3</span>
-          <span>24H 频次排行与入库</span>
-          <span id="page3Badge" class="hidden px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 text-xs border border-amber-500/30">0</span>
         </button>
       </div>
     </div>
@@ -138,13 +129,19 @@
                 <h2 class="text-sm font-bold text-white tracking-tight">
                   页面 1：筛选发射高市值代币 (CA)
                 </h2>
-                <!-- 精确到月日时的时间可选控件 -->
-                <div class="flex items-center space-x-1.5 bg-gray-900 border border-gray-700 px-2 py-1 rounded-xl text-xs">
-                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-rh-green"></i>
-                  <input type="datetime-local" id="inputStartTime" class="bg-transparent border-0 text-green-400 font-mono text-xs focus:outline-none cursor-pointer" title="开始时间 (精确到月日时)">
+                <!-- 精确到月日时的时间可选控件（支持点击唤起暗黑日历，以及快捷日期选择） -->
+                <div class="flex items-center space-x-1.5 bg-gray-900 border border-gray-700 px-2.5 py-1 rounded-xl text-xs hover:border-green-500/50 transition shadow-inner">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-rh-green cursor-pointer" onclick="try{document.getElementById('inputStartTime').showPicker()}catch(e){}"></i>
+                  <input type="datetime-local" id="inputStartTime" onclick="try{this.showPicker()}catch(e){}" style="color-scheme: dark;" class="bg-transparent border-0 text-green-400 font-mono text-xs focus:outline-none cursor-pointer hover:text-green-300" title="点击选择开始时间 (精确到月日时分)">
                   <span class="text-gray-500 font-bold">~</span>
-                  <input type="datetime-local" id="inputEndTime" class="bg-transparent border-0 text-green-400 font-mono text-xs focus:outline-none cursor-pointer" title="结束时间 (精确到月日时)">
-                  <button onclick="initTimeInputs(true)" class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="重置为今日早8点~次日早8点">重置8点</button>
+                  <input type="datetime-local" id="inputEndTime" onclick="try{this.showPicker()}catch(e){}" style="color-scheme: dark;" class="bg-transparent border-0 text-green-400 font-mono text-xs focus:outline-none cursor-pointer hover:text-green-300" title="点击选择结束时间 (精确到月日时分)">
+                  
+                  <!-- 快捷时间选择 -->
+                  <div class="flex items-center space-x-1 ml-1 pl-1.5 border-l border-gray-700">
+                    <button type="button" onclick="setQuickDateRange('today_8am')" class="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="今日08:00 ~ 明日08:00">今日8点</button>
+                    <button type="button" onclick="setQuickDateRange('yesterday_8am')" class="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="昨日08:00 ~ 今日08:00">昨日8点</button>
+                    <button type="button" onclick="setQuickDateRange('last_24h')" class="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 transition" title="过去24小时">近24H</button>
+                  </div>
                 </div>
               </div>
               <p class="text-[11px] text-gray-400 mt-0.5">严格仅筛选所选时间段内新发射开盘、ATH 市值超 500k 的优质代币</p>
@@ -240,89 +237,33 @@
 
     <!-- ==================== 页面 2: 找到这些 CA 的内盘地址 ==================== -->
     <section id="viewPage2" class="hidden flex-1 flex flex-col overflow-hidden space-y-3 min-h-0">
-      <!-- 页面 2 顶部控制台（固定） -->
+      <!-- 页面 2 控制台：两段式操作（第1步穿透提取全部买家，第2步按条件深度过滤） -->
       <div class="flex-shrink-0 bg-[#111622] rounded-2xl border border-gray-800 p-3.5 shadow-xl space-y-3">
+        <!-- 标题行 -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <i data-lucide="users" class="w-4 h-4 text-rh-green"></i> 页面 2：内盘地址提取与聪明钱包深度过滤
+              <i data-lucide="users" class="w-4 h-4 text-rh-green"></i> 页面 2：内盘买家全量穿透与聪明钱深度过滤
             </h2>
             <p class="text-[11px] text-gray-400 mt-0.5">
-              穿透所选代币在 Bonding Curve 开盘前的独立买入地址，并以三大铁门进行聪明钱质检
+              先点击“开始穿透”搜索出所有内盘买家，再自由勾选设置 4 个门槛条件点击“执行条件过滤”进行精选！
             </p>
           </div>
 
           <div class="flex items-center space-x-2">
             <button onclick="switchView('page1')" class="px-3 py-1.5 rounded-lg border border-gray-700 bg-gray-800 hover:bg-gray-700 text-xs font-medium text-gray-300 transition flex items-center gap-1">
-              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> 返回页面 1 重新勾选
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> 返回页面 1 重新勾选 CA
             </button>
           </div>
         </div>
 
-        <!-- 质检规则卡片（用户可自由编辑这 3 个指标） -->
-        <div class="p-2.5 bg-gray-900/90 rounded-xl border border-gray-800/80 space-y-2">
-          <div class="flex items-center justify-between text-xs text-gray-400">
-            <span class="font-bold text-white flex items-center gap-1.5">
-              <i data-lucide="sliders" class="w-3.5 h-3.5 text-rh-green"></i> 聪明钱包质检门槛 (可自由修改指标)：
-            </span>
-            <span class="text-[11px] text-gray-500">修改数值后回车或点击右侧即可实时重筛</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-            <!-- 指标 1: 月交易天数 -->
-            <div class="bg-gray-950/80 p-2.5 rounded-lg border border-gray-800 hover:border-green-500/30 transition">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                  <input type="checkbox" id="checkEnableActiveDays" checked onchange="toggleFilterCard(1, this.checked); applyFiltersInMemory();" class="rounded text-green-500 focus:ring-0 cursor-pointer w-3.5 h-3.5" title="勾选/取消此筛选条件">
-                  <div class="w-4 h-4 rounded bg-green-500/10 text-green-400 flex items-center justify-center font-bold text-[10px] border border-green-500/20">1</div>
-                  <label for="checkEnableActiveDays" class="font-bold text-gray-200 cursor-pointer">月交易天数 ≥</label>
-                </div>
-                <span class="text-[10px] text-gray-500">持续活跃</span>
-              </div>
-              <div id="wrapperMinActiveDays" class="flex items-center gap-2 mt-1.5 transition-opacity">
-                <input type="number" id="inputMinActiveDays" value="7" min="1" max="30" onchange="applyFiltersInMemory()" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs font-bold font-mono text-green-400 focus:outline-none focus:border-green-500 text-center">
-                <span class="text-gray-400 font-medium">天</span>
-              </div>
-            </div>
-
-            <!-- 指标 2: 胜率 -->
-            <div class="bg-gray-950/80 p-2.5 rounded-lg border border-gray-800 hover:border-green-500/30 transition">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                  <input type="checkbox" id="checkEnableWinrate" checked onchange="toggleFilterCard(2, this.checked); applyFiltersInMemory();" class="rounded text-green-500 focus:ring-0 cursor-pointer w-3.5 h-3.5" title="勾选/取消此筛选条件">
-                  <div class="w-4 h-4 rounded bg-green-500/10 text-green-400 flex items-center justify-center font-bold text-[10px] border border-green-500/20">2</div>
-                  <label for="checkEnableWinrate" class="font-bold text-gray-200 cursor-pointer">胜率 ></label>
-                </div>
-                <span class="text-[10px] text-gray-500">胜率门槛</span>
-              </div>
-              <div id="wrapperMinWinrate" class="flex items-center gap-2 mt-1.5 transition-opacity">
-                <input type="number" id="inputMinWinrate" value="50" min="0" max="100" step="5" onchange="applyFiltersInMemory()" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs font-bold font-mono text-green-400 focus:outline-none focus:border-green-500 text-center">
-                <span class="text-gray-400 font-medium">%</span>
-              </div>
-            </div>
-
-            <!-- 指标 3: 7天已实现利润 (用户要求：改30天为7天实现利润) -->
-            <div class="bg-gray-950/80 p-2.5 rounded-lg border border-gray-800 hover:border-green-500/30 transition">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                  <input type="checkbox" id="checkEnableProfit" checked onchange="toggleFilterCard(3, this.checked); applyFiltersInMemory();" class="rounded text-green-500 focus:ring-0 cursor-pointer w-3.5 h-3.5" title="勾选/取消此筛选条件">
-                  <div class="w-4 h-4 rounded bg-green-500/10 text-green-400 flex items-center justify-center font-bold text-[10px] border border-green-500/20">3</div>
-                  <label for="checkEnableProfit" class="font-bold text-gray-200 cursor-pointer">7天已实现利润 ></label>
-                </div>
-                <span class="text-[10px] text-gray-500">7D Realized</span>
-              </div>
-              <div id="wrapperMinProfit" class="flex items-center gap-2 mt-1.5 transition-opacity">
-                <span class="text-gray-400 font-bold">$</span>
-                <input type="number" id="inputMinProfit" value="10000" min="0" step="1000" onchange="applyFiltersInMemory()" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs font-bold font-mono text-green-400 focus:outline-none focus:border-green-500 text-center">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 来源代币展示 & 开始提取按钮 -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-          <div class="flex items-center gap-2 flex-wrap text-xs">
-            <span class="text-gray-400 font-medium">待穿透代币:</span>
+        <!-- 阶段 1：穿透提取全部内盘买家 -->
+        <div class="p-3 bg-gray-900/90 rounded-xl border border-gray-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-inner">
+          <div class="flex items-center gap-2.5 flex-wrap text-xs">
+            <div class="w-5 h-5 rounded-full bg-green-500/20 text-green-400 font-bold flex items-center justify-center text-xs border border-green-500/30">1</div>
+            <span class="text-white font-bold text-xs">第 1 步：全量穿透抓取</span>
+            <span class="text-gray-600">|</span>
+            <span class="text-gray-400">待穿透代币:</span>
             <div id="page2TokenPills" class="flex items-center">
               <span class="px-2.5 py-1 rounded-lg bg-green-500/10 text-green-400 border border-green-500/20 font-mono font-bold text-xs">
                 已选中 0 个代币
@@ -330,38 +271,140 @@
             </div>
           </div>
 
-          <div class="flex items-center space-x-3">
-            <label class="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
-              <input type="checkbox" id="checkStrictFilter" checked class="rounded text-green-500 focus:ring-0">
-              <span>仅严格达标</span>
-            </label>
-            <button id="btnExtractWallets" onclick="startExtractWallets()" class="py-1.5 px-4 rounded-xl font-bold bg-rh-green hover:bg-rh-greenHover text-black transition flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 text-xs">
-              <i data-lucide="zap" class="w-3.5 h-3.5"></i> 开始穿透提取内盘买家
-            </button>
+          <button id="btnExtractWallets" onclick="startExtractWallets()" class="py-2 px-5 rounded-xl font-bold bg-rh-green hover:bg-rh-greenHover text-black transition flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 text-xs sm:text-sm whitespace-nowrap">
+            <i data-lucide="zap" class="w-4 h-4"></i> 开始穿透提取全部内盘买家
+          </button>
+        </div>
+
+        <!-- 阶段 2：4 个条件编辑与执行条件过滤 -->
+        <div class="p-3 bg-gray-900/90 rounded-xl border border-gray-800/90 space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold flex items-center justify-center text-xs border border-amber-500/30">2</div>
+              <span class="font-bold text-white text-xs">第 2 步：聪明钱多维门槛过滤</span>
+              <span class="text-[11px] text-gray-400">（在搜索出的内盘买家中，自由勾选以下条件再过滤）：</span>
+            </div>
+
+            <!-- 过滤操作按钮组（新建按钮：执行条件过滤 + 显示全部买家） -->
+            <div class="flex items-center gap-2">
+              <button id="btnApplyFilter" onclick="applyFiltersInMemory()" class="py-1.5 px-4 rounded-xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black transition flex items-center gap-1.5 text-xs shadow-lg shadow-orange-500/20 whitespace-nowrap">
+                <i data-lucide="filter" class="w-3.5 h-3.5"></i> 执行条件过滤
+              </button>
+              <button onclick="resetFiltersShowAll()" class="py-1.5 px-3 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300 transition flex items-center gap-1.5 text-xs whitespace-nowrap" title="重置条件，显示所有搜索到的内盘钱包">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-gray-400"></i> 显示全部买家
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 个编辑条件卡片 -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+            <!-- 条件 1: 命中内盘代币数 -->
+            <div class="bg-gray-950/80 p-2.5 rounded-lg border border-gray-800 hover:border-amber-500/30 transition">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <input type="checkbox" id="checkEnableTokenCount" checked onchange="toggleFilterCard(4, this.checked);" class="rounded text-amber-500 focus:ring-0 cursor-pointer w-3.5 h-3.5" title="勾选启用此筛选条件">
+                  <div class="w-4 h-4 rounded bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-[10px] border border-amber-500/20">1</div>
+                  <label for="checkEnableTokenCount" class="font-bold text-amber-300 cursor-pointer">命中内盘代币 ≥</label>
+                </div>
+                <span class="text-[10px] text-amber-500/80 font-mono">Tokens Hit</span>
+              </div>
+              <div id="wrapperMinTokenCount" class="flex items-center gap-2 mt-1.5 transition-opacity">
+                <input type="number" id="inputMinTokenCount" value="2" min="1" max="100" step="1" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs font-bold font-mono text-amber-300 focus:outline-none focus:border-amber-500 text-center" placeholder="例如: 10">
+                <span class="text-gray-400 font-medium">个</span>
+              </div>
+            </div>
+
+            <!-- 条件 2: 7天已实现利润 -->
+            <div class="bg-gray-950/80 p-2.5 rounded-lg border border-gray-800 hover:border-green-500/30 transition">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <input type="checkbox" id="checkEnableProfit" checked onchange="toggleFilterCard(3, this.checked);" class="rounded text-green-500 focus:ring-0 cursor-pointer w-3.5 h-3.5" title="勾选启用此筛选条件">
+                  <div class="w-4 h-4 rounded bg-green-500/10 text-green-400 flex items-center justify-center font-bold text-[10px] border border-green-500/20">2</div>
+                  <label for="checkEnableProfit" class="font-bold text-gray-200 cursor-pointer">7天已实现利润 ></label>
+                </div>
+                <span class="text-[10px] text-gray-500">7D Realized</span>
+              </div>
+              <div id="wrapperMinProfit" class="flex items-center gap-2 mt-1.5 transition-opacity">
+                <span class="text-gray-400 font-bold">$</span>
+                <input type="number" id="inputMinProfit" value="10000" min="0" step="1000" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs font-bold font-mono text-green-400 focus:outline-none focus:border-green-500 text-center">
+              </div>
+            </div>
+
+            <!-- 条件 3: 胜率 -->
+            <div class="bg-gray-950/80 p-2.5 rounded-lg border border-gray-800 hover:border-green-500/30 transition">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <input type="checkbox" id="checkEnableWinrate" checked onchange="toggleFilterCard(2, this.checked);" class="rounded text-green-500 focus:ring-0 cursor-pointer w-3.5 h-3.5" title="勾选启用此筛选条件">
+                  <div class="w-4 h-4 rounded bg-green-500/10 text-green-400 flex items-center justify-center font-bold text-[10px] border border-green-500/20">3</div>
+                  <label for="checkEnableWinrate" class="font-bold text-gray-200 cursor-pointer">胜率 ></label>
+                </div>
+                <span class="text-[10px] text-gray-500">胜率门槛</span>
+              </div>
+              <div id="wrapperMinWinrate" class="flex items-center gap-2 mt-1.5 transition-opacity">
+                <input type="number" id="inputMinWinrate" value="50" min="0" max="100" step="5" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs font-bold font-mono text-green-400 focus:outline-none focus:border-green-500 text-center">
+                <span class="text-gray-400 font-medium">%</span>
+              </div>
+            </div>
+
+            <!-- 条件 4: 月交易天数 -->
+            <div class="bg-gray-950/80 p-2.5 rounded-lg border border-gray-800 hover:border-green-500/30 transition">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <input type="checkbox" id="checkEnableActiveDays" checked onchange="toggleFilterCard(1, this.checked);" class="rounded text-green-500 focus:ring-0 cursor-pointer w-3.5 h-3.5" title="勾选启用此筛选条件">
+                  <div class="w-4 h-4 rounded bg-green-500/10 text-green-400 flex items-center justify-center font-bold text-[10px] border border-green-500/20">4</div>
+                  <label for="checkEnableActiveDays" class="font-bold text-gray-200 cursor-pointer">月交易天数 ≥</label>
+                </div>
+                <span class="text-[10px] text-gray-500">持续活跃</span>
+              </div>
+              <div id="wrapperMinActiveDays" class="flex items-center gap-2 mt-1.5 transition-opacity">
+                <input type="number" id="inputMinActiveDays" value="7" min="1" max="30" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs font-bold font-mono text-green-400 focus:outline-none focus:border-green-500 text-center">
+                <span class="text-gray-400 font-medium">天</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 提取结果列表（主体卡片：内部独立滚动） -->
       <div id="walletsContainer" class="flex-1 flex flex-col overflow-hidden min-h-0 bg-[#111622] rounded-2xl border border-gray-800 shadow-xl">
-        <div class="flex-shrink-0 border-b border-gray-800 px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111622] shadow-sm z-20">
-          <div class="flex items-center space-x-3">
+        <div class="flex-shrink-0 border-b border-gray-800 px-5 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#111622] shadow-sm z-20">
+          <div class="flex items-center space-x-3 flex-wrap gap-y-1">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i data-lucide="shield-check" class="w-4 h-4 text-rh-green"></i> 捕获的内盘买家列表
+              <i data-lucide="shield-check" class="w-4 h-4 text-rh-green"></i> 捕获内盘聪明钱包与频次排行
             </h3>
             <span id="walletStats" class="text-xs px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-gray-700">共 0 个地址</span>
+            <span id="newWalletsStat" class="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">新发现 0 个</span>
+            <span id="savedWalletsStat" class="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">已在库 0 个</span>
           </div>
 
-          <div class="flex items-center space-x-3 text-xs">
-            <button onclick="toggleAllWallets(true)" class="text-gray-400 hover:text-green-400 transition">全选</button>
-            <span class="text-gray-600">|</span>
-            <button onclick="toggleAllWallets(false)" class="text-gray-400 hover:text-white transition">取消全选</button>
-            <span class="text-gray-600">|</span>
-            <span class="text-green-400 font-medium">已勾选 <span id="selectedWalletCount">0</span> 个地址</span>
+          <div class="flex items-center space-x-3 text-xs flex-wrap gap-y-2">
+            <!-- 勾选助手 -->
+            <div class="flex items-center space-x-2 text-xs">
+              <button onclick="toggleAllWallets(true)" class="text-gray-400 hover:text-green-400 transition">全选</button>
+              <span class="text-gray-600">|</span>
+              <button onclick="toggleAllWallets(false)" class="text-gray-400 hover:text-white transition">取消全选</button>
+              <span class="text-gray-600">|</span>
+              <button onclick="selectOnlyNewWallets()" class="text-green-400 hover:underline transition font-medium">仅选新钱包</button>
+              <span class="text-gray-600">|</span>
+              <span class="text-gray-300">已选 <span id="selectedWalletCount" class="text-green-400 font-bold">0</span> 个</span>
+            </div>
+
+            <!-- 操作按钮：一键保存入库与导出 -->
+            <div class="flex items-center space-x-2">
+              <button onclick="batchSaveSelectedToDb()" class="py-1.5 px-3.5 rounded-xl font-bold bg-rh-green hover:bg-rh-greenHover text-black transition flex items-center gap-1.5 text-xs shadow-lg shadow-green-500/20" title="一键保存勾选的全新钱包到长期数据库，绝不重复入库">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i> 一键保存入库 (<span id="btnSaveNewCount">0</span>)
+              </button>
+              <button onclick="exportWallets('newline')" class="py-1.5 px-3 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-200 transition flex items-center gap-1.5 text-xs" title="导出已选钱包地址为纯文本">
+                <i data-lucide="copy" class="w-3.5 h-3.5 text-rh-green"></i> 导出 TG 监控
+              </button>
+              <button onclick="exportWallets('csv')" class="py-1.5 px-3 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-200 transition flex items-center gap-1.5 text-xs" title="导出已选钱包为CSV表格">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-sky-400"></i> 导出 CSV
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- 提取加载态 (改为 7 天胜率/盈利) -->
+        <!-- 提取加载态 -->
         <div id="walletsLoading" class="hidden py-12 text-center space-y-3">
           <div class="inline-block w-8 h-8 border-3 border-green-500 border-t-transparent rounded-full animate-spin"></div>
           <p class="text-sm text-gray-400">正在追踪代币开盘前区块交易与并发核验钱包 7 天胜率/盈利...</p>
@@ -372,92 +415,9 @@
           <p class="text-sm">点击上方“开始穿透提取内盘买家”按钮启动</p>
         </div>
 
-        <!-- 钱包表格（内部独立滚动） -->
-        <div id="walletsTableWrapper" class="hidden flex-1 overflow-y-auto overflow-x-auto custom-scroll min-h-0">
-          <table class="w-full text-left text-xs text-gray-300 relative border-collapse">
-            <thead class="sticky top-0 z-10 bg-gray-900 text-gray-400 uppercase font-mono border-b border-gray-800 shadow">
-              <tr>
-                <th class="p-3 w-10 text-center bg-gray-900"><input type="checkbox" id="checkAllWallets" onchange="toggleAllWallets(this.checked)" class="rounded text-green-500 focus:ring-0"></th>
-                <th class="p-3 bg-gray-900">钱包地址</th>
-                <th class="p-3 bg-gray-900">命中内盘代币</th>
-                <th class="p-3 bg-gray-900">胜率</th>
-                <th class="p-3 bg-gray-900">7天已实现利润</th>
-                <th class="p-3 bg-gray-900">月活跃天数</th>
-                <th class="p-3 bg-gray-900">智能标签</th>
-                <th class="p-3 text-right bg-gray-900">操作</th>
-              </tr>
-            </thead>
-            <tbody id="walletsTableBody" class="divide-y divide-gray-800/60 font-sans"></tbody>
-          </table>
-        </div>
-
-        <!-- 底部进入第三步的操作栏（固定在底部） -->
-        <div id="step2Footer" class="hidden flex-shrink-0 p-3.5 bg-gray-950/80 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div class="text-xs text-gray-400">
-            已勾选 <strong id="step2SelectedText" class="text-white font-mono">0</strong> 个优质内盘地址，准备计算其在 24 小时内的出现频次
-          </div>
-          <button onclick="goToStep3()" class="w-full sm:w-auto py-2 px-5 rounded-xl font-bold bg-gradient-to-r from-green-500 to-emerald-400 hover:opacity-90 text-black transition flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 text-xs sm:text-sm">
-            <span>进入页面 3：计算频次并排序</span>
-            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== 页面 3: 出现频次排序与长期数据库 ==================== -->
-    <section id="viewPage3" class="hidden flex-1 flex flex-col overflow-hidden space-y-3 min-h-0">
-      <!-- 页面 3 顶部卡片（固定） -->
-      <div class="flex-shrink-0 bg-[#111622] rounded-2xl border border-gray-800 p-3.5 shadow-xl space-y-3">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i> 页面 3：24H 内盘出现频次排行榜 & 长期数据库
-            </h2>
-            <p class="text-[11px] text-gray-400 mt-0.5">
-              按钱包在过去 24 小时内参与的不同内盘代币数量严格排序，挖掘连环潜伏的阴谋老鼠仓与高频内盘狙击手！
-            </p>
-          </div>
-
-          <!-- 批量保存与导出操作 -->
-          <div class="flex flex-wrap items-center gap-2">
-            <button onclick="batchSaveSelectedToDb()" class="py-1.5 px-3.5 rounded-xl font-bold bg-rh-green hover:bg-rh-greenHover text-black transition flex items-center gap-1.5 text-xs shadow-lg shadow-green-500/20">
-              <i data-lucide="save" class="w-3.5 h-3.5"></i> 一键保存入库 (<span id="p3SelectedCount">0</span>)
-            </button>
-            <button onclick="exportWallets('newline')" class="py-1.5 px-3 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-200 transition flex items-center gap-1.5 text-xs">
-              <i data-lucide="copy" class="w-3.5 h-3.5 text-rh-green"></i> 导出 TG 监控
-            </button>
-            <button onclick="exportWallets('csv')" class="py-1.5 px-3 rounded-xl border border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-200 transition flex items-center gap-1.5 text-xs">
-              <i data-lucide="download" class="w-3.5 h-3.5 text-sky-400"></i> 导出 CSV
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 频次排行榜容器（内部独立滚动） -->
-      <div class="flex-1 flex flex-col overflow-hidden min-h-0 bg-[#111622] rounded-2xl border border-gray-800 shadow-xl">
-        <div class="flex-shrink-0 flex items-center justify-between border-b border-gray-800 px-5 py-3 bg-[#111622] z-20">
-          <div class="flex items-center space-x-3">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i data-lucide="bar-chart-3" class="w-4 h-4 text-amber-400"></i> 频次矩阵碰撞排行榜
-            </h3>
-            <span id="rankStats" class="text-xs px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-gray-700">共 0 个</span>
-          </div>
-
-          <div class="flex items-center space-x-2 text-xs">
-            <button onclick="toggleAllRankWallets(true)" class="text-gray-400 hover:text-green-400 transition">全选</button>
-            <span class="text-gray-600">|</span>
-            <button onclick="toggleAllRankWallets(false)" class="text-gray-400 hover:text-white transition">反选</button>
-          </div>
-        </div>
-
-        <div id="rankEmpty" class="py-12 text-center text-gray-500 space-y-2">
-          <i data-lucide="sparkles" class="w-10 h-10 mx-auto opacity-40"></i>
-          <p class="text-sm">暂无数据，请先从页面 2 选择地址后流转至本页</p>
-        </div>
-
-        <!-- 排行榜卡片列表（独立滚动） -->
-        <div id="rankListWrapper" class="hidden flex-1 overflow-y-auto custom-scroll p-4 space-y-3 min-h-0">
-          <!-- 动态卡片 -->
+        <!-- 钱包频次卡片列表（内部独立滚动） -->
+        <div id="walletsListWrapper" class="hidden flex-1 overflow-y-auto custom-scroll p-4 space-y-3 min-h-0">
+          <!-- 动态卡片列表渲染至此处 -->
         </div>
       </div>
     </section>
@@ -486,20 +446,45 @@
         </div>
 
         <!-- 搜索与筛选工具栏 -->
-        <div class="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-gray-800/80 text-xs">
-          <div class="relative flex-1 w-full">
+        <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5 pt-2 border-t border-gray-800/80 text-xs">
+          <div class="relative flex-1">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2 text-gray-500"></i>
             <input type="text" id="dbSearchInput" oninput="loadDbWallets()" placeholder="搜索钱包地址、备注、标签或代币符号..." class="w-full bg-gray-900 border border-gray-700 rounded-xl pl-9 pr-3 py-1.5 text-white focus:outline-none focus:border-green-500 text-xs">
           </div>
 
-          <div class="flex items-center space-x-2 w-full sm:w-auto">
+          <!-- 快捷排序与过滤操作组 -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- 胜率排序快捷键 -->
+            <button id="btnQuickSortWinrate" onclick="toggleDbSort('winrate')" class="px-2.5 py-1.5 rounded-xl border border-gray-700 bg-gray-900 hover:border-green-500/50 text-gray-300 hover:text-green-400 transition flex items-center gap-1.5 text-xs whitespace-nowrap shadow-sm" title="点击切换按胜率快捷排序">
+              <i data-lucide="percent" class="w-3.5 h-3.5 text-green-400"></i>
+              <span>胜率排序</span>
+              <span id="quickSortWinrateIndicator" class="font-mono text-xs text-gray-500 font-bold">↕</span>
+            </button>
+
+            <!-- 7天利润排序快捷键 -->
+            <button id="btnQuickSortProfit" onclick="toggleDbSort('profit_7d')" class="px-2.5 py-1.5 rounded-xl border border-gray-700 bg-gray-900 hover:border-green-500/50 text-gray-300 hover:text-green-400 transition flex items-center gap-1.5 text-xs whitespace-nowrap shadow-sm" title="点击切换按7天已实现利润快捷排序">
+              <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-green-400"></i>
+              <span>7天利润排序</span>
+              <span id="quickSortProfitIndicator" class="font-mono text-xs text-gray-500 font-bold">↕</span>
+            </button>
+
+            <!-- 过滤不活跃钱包按键 -->
+            <button id="btnFilterInactive" onclick="toggleFilterInactiveWallets()" class="px-3 py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition flex items-center gap-1.5 text-xs font-medium whitespace-nowrap shadow-sm" title="过滤月交易活跃天数 < 15 天的不活跃钱包">
+              <i data-lucide="filter" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>过滤不活跃钱包 (无交易>15天)</span>
+            </button>
+          </div>
+
+          <div class="flex items-center space-x-2 flex-shrink-0">
             <select id="dbOrderBy" onchange="loadDbWallets()" class="bg-gray-900 border border-gray-700 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-green-500 text-xs">
               <option value="inner_play_count">按 24h 内盘参与数排序</option>
-              <option value="profit_30d">按 30天 利润排序</option>
+              <option value="profit_7d">按 7天 利润排序</option>
               <option value="winrate">按 30天 胜率排序</option>
+              <option value="profit_30d">按 30天 利润排序</option>
+              <option value="active_days_30d">按 月活跃天数排序</option>
               <option value="last_updated_at">按 最近更新时间排序</option>
             </select>
-            <button onclick="loadDbWallets()" class="p-1.5 bg-gray-800 hover:bg-gray-700 rounded-xl border border-gray-700 text-gray-300">
+            <button onclick="loadDbWallets()" class="p-1.5 bg-gray-800 hover:bg-gray-700 rounded-xl border border-gray-700 text-gray-300" title="刷新数据库列表">
               <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
             </button>
           </div>
@@ -515,19 +500,48 @@
           </div>
         </div>
 
+        <!-- 不活跃钱包过滤提醒横幅 (动态显示) -->
+        <div id="dbInactiveBanner" class="hidden px-5 py-2.5 bg-amber-950/40 border-b border-amber-500/30 flex items-center justify-between flex-wrap gap-2 text-xs">
+          <div class="flex items-center space-x-2 text-amber-300">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
+            <span>已筛选出 <b id="inactiveWalletCount" class="text-amber-200 underline font-mono text-sm">0</b> 个不活跃钱包（月活跃天数 &lt; 15 天，视同超过15天没有任何交易）</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="confirmDeleteInactiveWallets()" class="py-1 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold transition flex items-center gap-1 shadow-md shadow-red-600/20">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 确认删除这批不活跃钱包
+            </button>
+            <button onclick="resetDbFilterShowAll()" class="py-1 px-3 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition flex items-center gap-1">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i> 取消过滤并显示全部
+            </button>
+          </div>
+        </div>
+
         <div id="dbEmpty" class="hidden py-12 text-center text-gray-500 space-y-2">
           <i data-lucide="inbox" class="w-10 h-10 mx-auto opacity-40"></i>
-          <p class="text-sm">数据库暂无钱包记录，可从页面 3 保存聪明钱入库</p>
+          <p class="text-sm">数据库暂无钱包记录，可从页面 2 保存聪明钱入库</p>
         </div>
 
         <div id="dbTableWrapper" class="flex-1 overflow-y-auto overflow-x-auto custom-scroll min-h-0">
           <table class="w-full text-left text-xs text-gray-300 relative border-collapse">
             <thead class="sticky top-0 z-10 bg-gray-900 text-gray-400 uppercase font-mono border-b border-gray-800 shadow">
               <tr>
+                <th class="p-3 bg-gray-900 w-10 text-center">
+                  <input type="checkbox" id="checkAllDbWallets" onchange="toggleAllDbWallets(this.checked)" class="rounded text-green-500 focus:ring-0 cursor-pointer" title="全选/全不选">
+                </th>
                 <th class="p-3 bg-gray-900">钱包地址</th>
                 <th class="p-3 bg-gray-900">24h玩内盘数</th>
-                <th class="p-3 bg-gray-900">胜率</th>
-                <th class="p-3 bg-gray-900">7天已实现利润</th>
+                <th onclick="toggleDbSort('winrate')" class="p-3 bg-gray-900 cursor-pointer hover:text-green-400 select-none transition group" title="点击切换胜率排序">
+                  <div class="flex items-center space-x-1">
+                    <span>胜率</span>
+                    <span id="thSortWinrate" class="font-mono text-xs text-gray-500 group-hover:text-green-400 font-bold">↕</span>
+                  </div>
+                </th>
+                <th onclick="toggleDbSort('profit_7d')" class="p-3 bg-gray-900 cursor-pointer hover:text-green-400 select-none transition group" title="点击切换7天已实现利润排序">
+                  <div class="flex items-center space-x-1">
+                    <span>7天已实现利润</span>
+                    <span id="thSortProfit" class="font-mono text-xs text-gray-500 group-hover:text-green-400 font-bold">↕</span>
+                  </div>
+                </th>
                 <th class="p-3 bg-gray-900">月活跃天数</th>
                 <th class="p-3 bg-gray-900">命中历史代币</th>
                 <th class="p-3 bg-gray-900">用户备注 (可点击编辑)</th>
@@ -536,6 +550,25 @@
             </thead>
             <tbody id="dbTableBody" class="divide-y divide-gray-800/60 font-sans"></tbody>
           </table>
+        </div>
+
+        <!-- 底部控制栏：全选框 + 选中计数 + 批量删除 -->
+        <div id="dbFooterBar" class="flex-shrink-0 flex items-center justify-between border-t border-gray-800 px-5 py-2.5 bg-gray-950/90 z-20 text-xs">
+          <div class="flex items-center space-x-3">
+            <label class="flex items-center space-x-2 cursor-pointer select-none text-gray-300 hover:text-white">
+              <input type="checkbox" id="checkAllDbWalletsBottom" onchange="toggleAllDbWallets(this.checked)" class="rounded text-green-500 focus:ring-0 cursor-pointer">
+              <span class="font-medium">全选</span>
+            </label>
+            <span class="text-gray-600">|</span>
+            <span class="text-gray-400">已选中 <span id="selectedDbWalletCount" class="font-bold font-mono text-green-400">0</span> / <span id="totalDbWalletDisplayCount" class="font-mono">0</span> 个钱包</span>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <button id="btnBatchDeleteDb" onclick="batchDeleteSelectedDbWallets()" disabled class="px-3.5 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition flex items-center gap-1.5 font-medium disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-red-500/10 disabled:hover:text-red-400">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>删除所选钱包 (<span id="deleteSelectedCount">0</span>)</span>
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -555,20 +588,38 @@
       timeMode: 'bj_8am',
       tokens: [],
       selectedTokens: [],
+      rawAllWallets: [],
       harvestedWallets: [],
       selectedWallets: [],
-      rankedWallets: [],
-      dbWallets: []
+      dbWallets: [],
+      dbFilteredWallets: [],
+      isFilteringInactive: false,
+      dbSortField: null,
+      dbSortDir: 'desc',
+      dbAddressSet: new Set()
     };
 
     // ---------------- 初始化 ----------------
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       initTimeInputs();
+      loadDbAddresses();
       loadDbWallets();
       // 默认直接触发一次代币扫描
       startScanTokens();
     });
+
+    async function loadDbAddresses() {
+      try {
+        const resp = await fetch('/api/db/wallets/addresses');
+        const res = await resp.json();
+        if (res.success && Array.isArray(res.addresses)) {
+          state.dbAddressSet = new Set(res.addresses.map(a => a.toLowerCase().trim()));
+        }
+      } catch (e) {
+        console.error('加载已在库地址失败', e);
+      }
+    }
 
     function showToast(msg, isSuccess = true) {
       const toast = document.getElementById('toast');
@@ -594,23 +645,64 @@
     }
 
     function switchView(view) {
+      if (view === 'page3') view = 'page2';
       state.currentView = view;
-      ['page1', 'page2', 'page3', 'db'].forEach(v => {
+      ['page1', 'page2', 'db'].forEach(v => {
         const el = document.getElementById('view' + (v === 'db' ? 'Db' : v.charAt(0).toUpperCase() + v.slice(1)));
         if (el) el.classList.toggle('hidden', v !== view);
       });
 
       // 导航高亮
-      ['1', '2', '3'].forEach(num => {
+      ['1', '2'].forEach(num => {
         const btn = document.getElementById('stepNav' + num);
-        const active = (view === 'page' + num);
-        if (active) {
-          btn.className = 'flex-1 py-2 px-3 rounded-lg border transition flex items-center justify-center gap-2 font-semibold step-active';
-        } else {
-          btn.className = 'flex-1 py-2 px-3 rounded-lg border border-gray-800 bg-gray-900/60 text-gray-400 hover:text-gray-200 transition flex items-center justify-center gap-2 font-medium';
+        if (btn) {
+          const active = (view === 'page' + num);
+          if (active) {
+            btn.className = 'flex-1 py-1.5 px-3 rounded-lg border transition flex items-center justify-center gap-2 font-semibold step-active';
+          } else {
+            btn.className = 'flex-1 py-1.5 px-3 rounded-lg border border-gray-800 bg-gray-900/60 text-gray-400 hover:text-gray-200 transition flex items-center justify-center gap-2 font-medium';
+          }
         }
       });
       lucide.createIcons();
+    }
+
+    // 格式化 Date 为本地 datetime-local 字符串 (YYYY-MM-DDTHH:mm)
+    function formatDateLocal(dt) {
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const d = String(dt.getDate()).padStart(2, '0');
+      const h = String(dt.getHours()).padStart(2, '0');
+      const min = String(dt.getMinutes()).padStart(2, '0');
+      return `${y}-${m}-${d}T${h}:${min}`;
+    }
+
+    // 快捷日期时间范围设置
+    function setQuickDateRange(type) {
+      const now = new Date();
+      let sDate, eDate;
+
+      if (type === 'today_8am') {
+        sDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+        eDate = new Date(sDate.getTime() + 24 * 3600 * 1000);
+      } else if (type === 'yesterday_8am') {
+        eDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+        sDate = new Date(eDate.getTime() - 24 * 3600 * 1000);
+      } else if (type === 'daybefore_8am') {
+        const yesterday8am = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0) - 24 * 3600 * 1000;
+        eDate = new Date(yesterday8am);
+        sDate = new Date(eDate.getTime() - 24 * 3600 * 1000);
+      } else if (type === 'last_24h') {
+        eDate = new Date(now.getTime());
+        sDate = new Date(now.getTime() - 24 * 3600 * 1000);
+      }
+
+      if (sDate && eDate) {
+        document.getElementById('inputStartTime').value = formatDateLocal(sDate);
+        document.getElementById('inputEndTime').value = formatDateLocal(eDate);
+        showToast('已切换时间范围，正在扫描金狗代币...');
+        startScanTokens();
+      }
     }
 
     // 初始化精确到月日时的时间选择控件 (默认今日早8点~次日早8点)
@@ -884,44 +976,33 @@
       lucide.createIcons();
 
       switchView('page2');
-      // 严格只对这些选中数量代币进行内盘玩家搜索
-      startExtractWallets();
+      // 用户核心要求：进入页面2后，不要自动开始筛选！等待用户点击“开始穿透提取全部内盘买家”
+      showToast(`已选定 ${selected.length} 个代币，请点击“开始穿透提取全部内盘买家”开始搜索`);
     }
 
-    // ---------------- 页面 2：提取内盘地址与质检 ----------------
+    // ---------------- 页面 2：提取内盘地址与两段式过滤 ----------------
+    // 第 1 步：穿透提取全部内盘买家 (全量搜索，不设严格过滤)
     async function startExtractWallets() {
       if (!state.selectedTokens || state.selectedTokens.length === 0) {
         showToast('请先在页面 1 选择代币', false);
         return;
       }
 
-      const enableDays = document.getElementById('checkEnableActiveDays') ? document.getElementById('checkEnableActiveDays').checked : true;
-      const minDays = parseInt(document.getElementById('inputMinActiveDays').value) || 7;
-
-      const enableWin = document.getElementById('checkEnableWinrate') ? document.getElementById('checkEnableWinrate').checked : true;
-      const minWin = parseFloat(document.getElementById('inputMinWinrate').value) || 50.0;
-
-      const enableProf = document.getElementById('checkEnableProfit') ? document.getElementById('checkEnableProfit').checked : true;
-      const minProf = parseFloat(document.getElementById('inputMinProfit').value) || 10000.0;
-
-      const isStrict = document.getElementById('checkStrictFilter').checked;
-
       document.getElementById('walletsLoading').classList.remove('hidden');
       document.getElementById('walletsEmpty').classList.add('hidden');
-      document.getElementById('walletsTableWrapper').classList.add('hidden');
-      document.getElementById('step2Footer').classList.add('hidden');
+      document.getElementById('walletsListWrapper').classList.add('hidden');
+
+      const btnExtract = document.getElementById('btnExtractWallets');
+      if (btnExtract) {
+        btnExtract.disabled = true;
+        btnExtract.classList.add('opacity-50', 'cursor-not-allowed');
+      }
 
       try {
-        // 严格仅把页面 1 选中的这批代币传给后端
+        // 全量提取所有内盘买家
         const payload = {
           tokens: state.selectedTokens.map(t => ({address: t.address, symbol: t.symbol})),
-          require_strict_filter: isStrict,
-          enable_active_days: enableDays,
-          min_active_days: minDays,
-          enable_winrate: enableWin,
-          min_winrate: minWin,
-          enable_profit: enableProf,
-          min_profit_usd: minProf
+          require_strict_filter: false
         };
         const resp = await fetch('/api/wallets/extract-internal', {
           method: 'POST',
@@ -934,12 +1015,17 @@
         state.rawAllWallets = res.data.all_wallets || [];
         state.totalHarvestedCount = res.data.total_unique_harvested || state.rawAllWallets.length;
         
-        // 渲染列表
-        applyFiltersInMemory();
+        // 先全量展示所有搜索出来的内盘钱包
+        resetFiltersShowAll(false);
+        showToast(`穿透提取完成！共搜索出 ${state.rawAllWallets.length} 个内盘买家。您可以在上方勾选条件后点击【执行条件过滤】`, true);
       } catch (err) {
         showToast('提取内盘地址失败: ' + err.message, false);
       } finally {
         document.getElementById('walletsLoading').classList.add('hidden');
+        if (btnExtract) {
+          btnExtract.disabled = false;
+          btnExtract.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
       }
     }
 
@@ -948,7 +1034,8 @@
       const ids = {
         1: 'wrapperMinActiveDays',
         2: 'wrapperMinWinrate',
-        3: 'wrapperMinProfit'
+        3: 'wrapperMinProfit',
+        4: 'wrapperMinTokenCount'
       };
       const el = document.getElementById(ids[idx]);
       if (el) {
@@ -960,9 +1047,15 @@
       }
     }
 
-    // 用户在界面修改 3 个指标复选框或输入框时，秒级动态在前端重筛更新
+    // 第 2 步：纯前端内存条件过滤（点击“执行条件过滤”触发，绝不重新请求后端）
     function applyFiltersInMemory() {
-      if (!state.rawAllWallets || state.rawAllWallets.length === 0) return;
+      if (!state.rawAllWallets || state.rawAllWallets.length === 0) {
+        showToast('暂无内盘买家数据，请先点击【开始穿透提取全部内盘买家】', false);
+        return;
+      }
+
+      const enableTokens = document.getElementById('checkEnableTokenCount') ? document.getElementById('checkEnableTokenCount').checked : true;
+      const minTokens = parseInt(document.getElementById('inputMinTokenCount').value) || 1;
 
       const enableDays = document.getElementById('checkEnableActiveDays') ? document.getElementById('checkEnableActiveDays').checked : true;
       const minDays = parseInt(document.getElementById('inputMinActiveDays').value) || 0;
@@ -973,93 +1066,168 @@
       const enableProf = document.getElementById('checkEnableProfit') ? document.getElementById('checkEnableProfit').checked : true;
       const minProf = parseFloat(document.getElementById('inputMinProfit').value) || 0.0;
 
-      const isStrict = document.getElementById('checkStrictFilter').checked;
+      let filtered = state.rawAllWallets.filter(w => {
+        const tokenCount = (w.matched_tokens ? w.matched_tokens.length : (w.inner_play_count_24h || 1));
+        const passTokens = (!enableTokens) || (tokenCount >= minTokens);
+        const passDays = (!enableDays) || ((w.active_days_30d || 0) >= minDays);
+        const passWin = (!enableWin) || ((w.winrate || 0) >= minWin);
+        const currentProfit = (w.profit_7d != null && w.profit_7d !== 0) ? w.profit_7d : (w.profit_30d || 0);
+        const passProf = (!enableProf) || (currentProfit >= minProf);
 
-      let filtered = [];
-      if (!isStrict) {
-        filtered = [...state.rawAllWallets];
-      } else {
-        filtered = state.rawAllWallets.filter(w => {
-          const passDays = (!enableDays) || (w.active_days_30d >= minDays);
-          const passWin = (!enableWin) || (w.winrate >= minWin);
-          const currentProfit = (w.profit_7d != null && w.profit_7d !== 0) ? w.profit_7d : (w.profit_30d || 0);
-          const passProf = (!enableProf) || (currentProfit >= minProf);
-          return passDays && passWin && passProf;
-        });
-      }
+        return passTokens && passDays && passWin && passProf;
+      });
+
+      // 默认按命中内盘代币数量（频次）由高到低排序，次要按利润与胜率排序
+      filtered.sort((a, b) => {
+        const countA = a.matched_tokens ? a.matched_tokens.length : (a.inner_play_count_24h || 1);
+        const countB = b.matched_tokens ? b.matched_tokens.length : (b.inner_play_count_24h || 1);
+        if (countB !== countA) return countB - countA;
+        const profA = (a.profit_7d != null && a.profit_7d !== 0) ? a.profit_7d : (a.profit_30d || 0);
+        const profB = (b.profit_7d != null && b.profit_7d !== 0) ? b.profit_7d : (b.profit_30d || 0);
+        if (profB !== profA) return profB - profA;
+        return (b.winrate || 0) - (a.winrate || 0);
+      });
+
+      // 智能比对已在库状态与选中初始化
+      filtered.forEach(w => {
+        w.is_saved = state.dbAddressSet.has(w.address.toLowerCase().trim());
+        if (w.selected === undefined) {
+          w.selected = true;
+        }
+      });
 
       state.harvestedWallets = filtered;
-      filtered.forEach(w => w.selected = true);
       renderWalletsList(filtered, state.totalHarvestedCount);
+      showToast(`已执行条件过滤：共筛选出 ${filtered.length} 个达标钱包 (总搜索 ${state.rawAllWallets.length} 个)`);
     }
 
-    function renderWalletsList(wallets, totalHarvested = 0) {
-      const tbody = document.getElementById('walletsTableBody');
-      tbody.innerHTML = '';
-
-      document.getElementById('walletStats').innerText = `质检合格 ${wallets.length} 个 (总捕获 ${totalHarvested || wallets.length})`;
-      document.getElementById('page2Badge').innerText = wallets.length;
-      document.getElementById('page2Badge').classList.remove('hidden');
-
-      if (wallets.length === 0) {
-        document.getElementById('walletsEmpty').classList.remove('hidden');
+    // 重置过滤，显示全部搜索出的内盘买家
+    function resetFiltersShowAll(notify = true) {
+      if (!state.rawAllWallets || state.rawAllWallets.length === 0) {
+        showToast('暂无内盘买家数据，请先点击【开始穿透提取全部内盘买家】', false);
         return;
       }
 
-      wallets.forEach((w, idx) => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-800/40 transition';
-
-        // 严格遵循用户图 3 要求：只显示命中内盘代币数量，不要显示所有代币，鼠标悬浮时展示所有参与代币
-        const tokenList = w.matched_tokens || [];
-        const tokenCount = tokenList.length;
-        const tokenNames = tokenList.join(', ') || '无';
-        const tokensCountBadge = `
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-gray-800 hover:bg-gray-700 text-green-400 border border-gray-700 hover:border-green-500/40 font-mono text-xs font-bold cursor-help transition shadow-sm" title="参与代币: ${tokenNames}">
-            ${tokenCount} 个
-          </span>
-        `;
-
-        const tagsHtml = (w.tags || []).map(tg =>
-          `<span class="px-1.5 py-0.2 rounded bg-green-500/10 text-green-400 border border-green-500/20 text-[11px]">${tg}</span>`
-        ).join(' ');
-
-        const p7Formatted = w.profit_7d_formatted || ('$' + (w.profit_7d || 0).toLocaleString());
-        const hasProfit = (w.profit_7d || 0) > 0;
-
-        tr.innerHTML = `
-          <td class="p-3 text-center">
-            <input type="checkbox" ${w.selected ? 'checked' : ''} onchange="onWalletCheckChange(${idx}, this.checked)" class="rounded text-green-500 focus:ring-0">
-          </td>
-          <td class="p-3 font-mono">
-            <div class="flex items-center space-x-1.5">
-              <span class="font-bold text-white">${w.address.slice(0, 8)}...${w.address.slice(-6)}</span>
-              <button onclick="copyText('${w.address}')" class="text-gray-500 hover:text-green-400 transition" title="复制地址"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
-              <a href="${w.gmgn_url}" target="_blank" class="text-gray-500 hover:text-sky-400 transition" title="GMGN 战绩"><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>
-            </div>
-          </td>
-          <!-- 命中内盘代币：只显示数量，悬浮显示参与的所有代币 -->
-          <td class="p-3">${tokensCountBadge}</td>
-          <!-- GMGN 胜率 -->
-          <td class="p-3 font-bold font-mono ${w.winrate >= 50 ? 'text-green-400' : 'text-gray-400'}">${w.winrate.toFixed(1)}%</td>
-          <!-- GMGN 7D已实现利润 -->
-          <td class="p-3 font-bold font-mono ${hasProfit ? 'text-green-400' : 'text-gray-300'}">
-            <div class="text-xs">${p7Formatted}</div>
-            ${w.pnl_7d ? `<div class="text-[10px] ${w.pnl_7d >= 0 ? 'text-green-400' : 'text-red-400'} font-normal">${w.pnl_7d > 0 ? '+' : ''}${w.pnl_7d}%</div>` : ''}
-          </td>
-          <td class="p-3 font-mono text-gray-300">${w.active_days_30d} 天</td>
-          <td class="p-3"><div class="flex flex-wrap gap-1">${tagsHtml}</div></td>
-          <td class="p-3 text-right">
-            <button onclick="quickSaveSingleWallet('${w.address}', ${w.winrate}, ${w.profit_7d || w.profit_30d || 0}, ${w.active_days_30d}, ${w.inner_play_count_24h})" class="px-2.5 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium inline-flex items-center gap-1 transition">
-              <i data-lucide="save" class="w-3 h-3 text-green-400"></i> 入库
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
+      let allWallets = [...state.rawAllWallets];
+      allWallets.sort((a, b) => {
+        const countA = a.matched_tokens ? a.matched_tokens.length : (a.inner_play_count_24h || 1);
+        const countB = b.matched_tokens ? b.matched_tokens.length : (b.inner_play_count_24h || 1);
+        if (countB !== countA) return countB - countA;
+        const profA = (a.profit_7d != null && a.profit_7d !== 0) ? a.profit_7d : (a.profit_30d || 0);
+        const profB = (b.profit_7d != null && b.profit_7d !== 0) ? b.profit_7d : (b.profit_30d || 0);
+        if (profB !== profA) return profB - profA;
+        return (b.winrate || 0) - (a.winrate || 0);
       });
 
-      document.getElementById('walletsTableWrapper').classList.remove('hidden');
-      document.getElementById('step2Footer').classList.remove('hidden');
+      allWallets.forEach(w => {
+        w.is_saved = state.dbAddressSet.has(w.address.toLowerCase().trim());
+        if (w.selected === undefined) {
+          w.selected = true;
+        }
+      });
+
+      state.harvestedWallets = allWallets;
+      renderWalletsList(allWallets, state.totalHarvestedCount);
+      if (notify) {
+        showToast(`已重置为全部显示：共 ${allWallets.length} 个内盘钱包`);
+      }
+    }
+
+    function renderWalletsList(wallets, totalHarvested = 0) {
+      const container = document.getElementById('walletsListWrapper');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const totalHit = totalHarvested || wallets.length;
+      document.getElementById('walletStats').innerText = `质检合格 ${wallets.length} 个 (总捕获 ${totalHit})`;
+      document.getElementById('page2Badge').innerText = wallets.length;
+      document.getElementById('page2Badge').classList.remove('hidden');
+
+      const savedInView = wallets.filter(w => w.is_saved).length;
+      const newInView = wallets.length - savedInView;
+      const newStatEl = document.getElementById('newWalletsStat');
+      const savedStatEl = document.getElementById('savedWalletsStat');
+      if (newStatEl) newStatEl.innerText = `新发现 ${newInView} 个`;
+      if (savedStatEl) savedStatEl.innerText = `已在库 ${savedInView} 个`;
+
+      if (wallets.length === 0) {
+        document.getElementById('walletsEmpty').classList.remove('hidden');
+        container.classList.add('hidden');
+        updateSelectedWalletCount();
+        return;
+      }
+
+      document.getElementById('walletsEmpty').classList.add('hidden');
+      container.classList.remove('hidden');
+
+      wallets.forEach((w, i) => {
+        const rankNum = i + 1;
+        let rankBadge = `<span class="w-7 h-7 rounded-xl bg-gray-800 text-gray-400 font-bold flex items-center justify-center font-mono text-xs flex-shrink-0">#${rankNum}</span>`;
+        if (rankNum === 1) rankBadge = `<span class="w-7 h-7 rounded-xl badge-rank-1 font-bold flex items-center justify-center font-mono text-xs shadow-lg shadow-amber-500/30 flex-shrink-0">🥇1</span>`;
+        else if (rankNum === 2) rankBadge = `<span class="w-7 h-7 rounded-xl badge-rank-2 font-bold flex items-center justify-center font-mono text-xs flex-shrink-0">🥈2</span>`;
+        else if (rankNum === 3) rankBadge = `<span class="w-7 h-7 rounded-xl badge-rank-3 font-bold flex items-center justify-center font-mono text-xs flex-shrink-0">🥉3</span>`;
+
+        const tokenList = w.matched_tokens || [];
+        const tokenCount = tokenList.length || w.inner_play_count_24h || 1;
+        const tokenTags = tokenList.map(sym => 
+          `<span class="px-2 py-0.5 rounded-md bg-gray-900 border border-gray-700 text-gray-200 text-xs font-mono font-bold">${sym}</span>`
+        ).join(' ') || '<span class="text-gray-500 text-xs">未知</span>';
+
+        const p7Formatted = w.profit_7d_formatted || ('$' + ((w.profit_7d != null && w.profit_7d !== 0) ? w.profit_7d : (w.profit_30d || 0)).toLocaleString());
+        const hasProfit = (w.profit_7d || w.profit_30d || 0) > 0;
+        const isSaved = Boolean(w.is_saved);
+
+        const card = document.createElement('div');
+        // 已在库用橙色微边框与特殊背景区分，未在库正常边框
+        card.className = `p-3.5 rounded-2xl bg-gray-900/60 border ${isSaved ? 'border-amber-500/40 bg-amber-950/15' : 'border-gray-800'} hover:border-green-500/40 hover:bg-gray-900/90 transition flex flex-col md:flex-row items-start md:items-center justify-between gap-3`;
+        
+        card.innerHTML = `
+          <!-- 左侧：勾选 + 排名 + 钱包地址(已入库橙色高亮，未入库白色) + 命中内盘代币列表 -->
+          <div class="flex items-center space-x-3 w-full md:w-auto">
+            <input type="checkbox" ${w.selected ? 'checked' : ''} onchange="onWalletCheckChange(${i}, this.checked)" class="rounded text-green-500 focus:ring-0 cursor-pointer">
+            ${rankBadge}
+            <div>
+              <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                <!-- 核心要求：已入库钱包用鲜明橙色字体标注，未入库用正常白色字体 -->
+                <span class="font-mono text-sm font-bold ${isSaved ? 'text-amber-400' : 'text-white'}">${w.address}</span>
+                ${isSaved 
+                  ? `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-mono font-bold flex items-center gap-1"><i data-lucide="database" class="w-3 h-3"></i> 已在库</span>`
+                  : `<span class="px-1.5 py-0.2 rounded bg-green-500/10 text-green-400 border border-green-500/20 text-[11px] font-mono">新发现</span>`
+                }
+                <button onclick="copyText('${w.address}')" class="text-gray-500 hover:text-green-400 transition" title="复制地址"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                <a href="${w.gmgn_url}" target="_blank" class="text-gray-500 hover:text-sky-400 transition" title="GMGN 战绩"><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>
+              </div>
+              <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                <span class="text-xs text-gray-500">命中内盘代币:</span>
+                ${tokenTags}
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：24H 频次高亮徽章 + 战绩指标 + 单项入库状态 -->
+          <div class="flex items-center justify-between md:justify-end space-x-4 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-gray-800 flex-shrink-0">
+            <!-- 24h 频次高亮徽章 -->
+            <div class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-300 flex items-center gap-1.5 text-xs font-bold font-mono">
+              <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
+              24H 参与 ${tokenCount} 个内盘
+            </div>
+
+            <!-- 战绩指标 -->
+            <div class="text-right">
+              <div class="text-xs text-gray-400">胜率 <span class="font-bold text-green-400 font-mono">${(w.winrate || 0).toFixed(1)}%</span></div>
+              <div class="text-xs text-gray-400">7D利润 <span class="font-bold font-mono ${hasProfit ? 'text-green-400' : 'text-gray-300'}">${p7Formatted}</span></div>
+            </div>
+
+            <!-- 单项入库状态 -->
+            ${isSaved
+              ? `<span class="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-medium flex items-center gap-1 cursor-default" title="该钱包已保存在长期数据库中"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> 长期在库</span>`
+              : `<button onclick="quickSaveSingleWallet('${w.address}', ${w.winrate || 0}, ${w.profit_7d || w.profit_30d || 0}, ${w.active_days_30d || 0}, ${tokenCount})" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-medium flex items-center gap-1 transition" title="存入长期数据库"><i data-lucide="bookmark" class="w-3.5 h-3.5 text-green-400"></i> 长期入库</button>`
+            }
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
       updateSelectedWalletCount();
       lucide.createIcons();
     }
@@ -1073,135 +1241,42 @@
 
     function toggleAllWallets(checked) {
       state.harvestedWallets.forEach(w => w.selected = checked);
-      document.querySelectorAll('#walletsTableBody input[type="checkbox"]').forEach(cb => cb.checked = checked);
-      const chkAll = document.getElementById('checkAllWallets');
-      if (chkAll) chkAll.checked = checked;
+      document.querySelectorAll('#walletsListWrapper input[type="checkbox"]').forEach(cb => cb.checked = checked);
       updateSelectedWalletCount();
     }
 
-    function updateSelectedWalletCount() {
-      const selected = state.harvestedWallets.filter(w => w.selected);
-      state.selectedWallets = selected;
-      document.getElementById('selectedWalletCount').innerText = selected.length;
-      document.getElementById('step2SelectedText').innerText = selected.length;
+    function selectOnlyNewWallets() {
+      state.harvestedWallets.forEach(w => {
+        w.selected = !w.is_saved;
+      });
+      renderWalletsList(state.harvestedWallets, state.totalHarvestedCount);
     }
 
-    function goToStep3() {
-      const selected = state.harvestedWallets.filter(w => w.selected);
-      if (selected.length === 0) {
-        showToast('请至少勾选一个内盘地址', false);
+    function updateSelectedWalletCount() {
+      const selected = (state.harvestedWallets || []).filter(w => w.selected);
+      state.selectedWallets = selected;
+      const countEl = document.getElementById('selectedWalletCount');
+      if (countEl) countEl.innerText = selected.length;
+
+      // 统计已勾选中，有多少个是全新的未入库钱包
+      const newSelectedCount = selected.filter(w => !w.is_saved).length;
+      const btnSaveCountEl = document.getElementById('btnSaveNewCount');
+      if (btnSaveCountEl) btnSaveCountEl.innerText = newSelectedCount;
+    }
+
+    // ---------------- 长期数据库持久化与智能去重 ----------------
+    async function quickSaveSingleWallet(address, winrate, profit, activeDays, innerCount) {
+      const lowerAddr = address.toLowerCase().trim();
+      if (state.dbAddressSet.has(lowerAddr)) {
+        showToast(`地址 ${address.slice(0, 8)}... 已在库中，绝不重复入库`, true);
         return;
       }
-      state.selectedWallets = selected;
-      switchView('page3');
-      renderFrequencyRanking(selected);
-    }
-
-    // ---------------- 页面 3：频次排行榜与长期入库 ----------------
-    async function renderFrequencyRanking(wallets) {
-      document.getElementById('rankEmpty').classList.add('hidden');
-      document.getElementById('rankListWrapper').classList.remove('hidden');
-
-      try {
-        const resp = await fetch('/api/wallets/frequency-rank', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({wallets: wallets})
-        });
-        const res = await resp.json();
-        if (!res.success) throw new Error(res.detail);
-
-        const ranked = res.data.ranked_wallets || [];
-        state.rankedWallets = ranked;
-        ranked.forEach(w => w.selected = true);
-
-        document.getElementById('rankStats').innerText = `已排序 ${ranked.length} 个高手`;
-        document.getElementById('page3Badge').innerText = ranked.length;
-        document.getElementById('page3Badge').classList.remove('hidden');
-        document.getElementById('p3SelectedCount').innerText = ranked.length;
-
-        const container = document.getElementById('rankListWrapper');
-        container.innerHTML = '';
-
-        ranked.forEach((w, i) => {
-          const rankNum = i + 1;
-          let rankBadge = `<span class="w-7 h-7 rounded-xl bg-gray-800 text-gray-400 font-bold flex items-center justify-center font-mono text-xs">#${rankNum}</span>`;
-          if (rankNum === 1) rankBadge = `<span class="w-7 h-7 rounded-xl badge-rank-1 font-bold flex items-center justify-center font-mono text-xs shadow-lg shadow-amber-500/30">🥇1</span>`;
-          else if (rankNum === 2) rankBadge = `<span class="w-7 h-7 rounded-xl badge-rank-2 font-bold flex items-center justify-center font-mono text-xs">🥈2</span>`;
-          else if (rankNum === 3) rankBadge = `<span class="w-7 h-7 rounded-xl badge-rank-3 font-bold flex items-center justify-center font-mono text-xs">🥉3</span>`;
-
-          const tokenTags = (w.matched_tokens || []).map(sym => 
-            `<span class="px-2 py-0.5 rounded-md bg-gray-900 border border-gray-700 text-gray-200 text-xs font-mono font-bold">${sym}</span>`
-          ).join(' ');
-
-          const card = document.createElement('div');
-          card.className = 'p-4 rounded-2xl bg-gray-900/60 border border-gray-800 hover:border-green-500/40 hover:bg-gray-900/90 transition flex flex-col md:flex-row items-start md:items-center justify-between gap-4';
-          card.innerHTML = `
-            <div class="flex items-center space-x-3.5 w-full md:w-auto">
-              <input type="checkbox" ${w.selected ? 'checked' : ''} onchange="onRankCheckChange(${i}, this.checked)" class="rounded text-green-500 focus:ring-0">
-              ${rankBadge}
-              <div>
-                <div class="flex items-center space-x-2">
-                  <span class="font-mono text-sm font-bold text-white">${w.address}</span>
-                  <button onclick="copyText('${w.address}')" class="text-gray-500 hover:text-green-400" title="复制地址"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
-                  <a href="${w.gmgn_url}" target="_blank" class="text-gray-500 hover:text-sky-400" title="GMGN 详情"><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>
-                </div>
-                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                  <span class="text-xs text-gray-500">命中内盘代币:</span>
-                  ${tokenTags}
-                </div>
-              </div>
-            </div>
-
-            <!-- 右侧指标与频次高亮 -->
-            <div class="flex items-center justify-between md:justify-end space-x-4 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-gray-800">
-              <!-- 24h 频次高亮徽章 -->
-              <div class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-300 flex items-center gap-1.5 text-xs font-bold font-mono">
-                <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
-                24H 参与 ${w.inner_play_count_24h || w.matched_tokens.length} 个内盘
-              </div>
-
-              <!-- 战绩指标 (GMGN 胜率与 7D已实现利润) -->
-              <div class="text-right">
-                <div class="text-xs text-gray-400">胜率 <span class="font-bold text-green-400 font-mono">${w.winrate.toFixed(1)}%</span></div>
-                <div class="text-xs text-gray-400">7D利润 <span class="font-bold text-green-400 font-mono">${w.profit_7d_formatted || ('$' + (w.profit_7d || w.profit_30d || 0).toLocaleString())}</span></div>
-              </div>
-
-              <button onclick="quickSaveSingleWallet('${w.address}', ${w.winrate}, ${w.profit_7d || w.profit_30d || 0}, ${w.active_days_30d}, ${w.inner_play_count_24h || w.matched_tokens.length})" class="px-3 py-1.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 text-xs font-medium flex items-center gap-1 transition">
-                <i data-lucide="bookmark" class="w-3.5 h-3.5 text-green-400"></i> 长期入库
-              </button>
-            </div>
-          `;
-          container.appendChild(card);
-        });
-        lucide.createIcons();
-      } catch (err) {
-        showToast('计算频次排序失败: ' + err.message, false);
-      }
-    }
-
-    function onRankCheckChange(idx, checked) {
-      if (state.rankedWallets[idx]) {
-        state.rankedWallets[idx].selected = checked;
-        const selCount = state.rankedWallets.filter(w => w.selected).length;
-        document.getElementById('p3SelectedCount').innerText = selCount;
-      }
-    }
-
-    function toggleAllRankWallets(checked) {
-      state.rankedWallets.forEach(w => w.selected = checked);
-      document.querySelectorAll('#rankListWrapper input[type="checkbox"]').forEach(cb => cb.checked = checked);
-      const selCount = state.rankedWallets.filter(w => w.selected).length;
-      document.getElementById('p3SelectedCount').innerText = selCount;
-    }
-
-    // ---------------- 长期数据库持久化 ----------------
-    async function quickSaveSingleWallet(address, winrate, profit, activeDays, innerCount) {
       try {
         const payload = {
           wallet: {
             address: address,
             winrate: winrate,
+            profit_7d: profit,
             profit_30d: profit,
             active_days_30d: activeDays,
             inner_play_count: innerCount,
@@ -1215,8 +1290,15 @@
         });
         const res = await resp.json();
         if (res.success) {
-          showToast(`地址 ${address.slice(0, 6)}... 已保存入库！`);
+          state.dbAddressSet.add(lowerAddr);
+          state.harvestedWallets.forEach(w => {
+            if (w.address.toLowerCase().trim() === lowerAddr) {
+              w.is_saved = true;
+            }
+          });
+          renderWalletsList(state.harvestedWallets, state.totalHarvestedCount);
           loadDbWallets();
+          showToast(`地址 ${address.slice(0, 8)}... 已成功保存入库！已标橙高亮显示。`);
         }
       } catch (e) {
         showToast('保存失败: ' + e.message, false);
@@ -1224,20 +1306,28 @@
     }
 
     async function batchSaveSelectedToDb() {
-      const selected = state.rankedWallets.filter(w => w.selected);
+      const selected = (state.harvestedWallets || []).filter(w => w.selected);
       if (selected.length === 0) {
         showToast('请至少勾选一个地址入库', false);
         return;
       }
+
+      // 核心要求：只添加新的钱包，绝不重复入库
+      const newWallets = selected.filter(w => !state.dbAddressSet.has(w.address.toLowerCase().trim()));
+      if (newWallets.length === 0) {
+        showToast(`所选的 ${selected.length} 个钱包均已在库中，无需重复入库！`, true);
+        return;
+      }
+
       try {
         const payload = {
-          wallets: selected.map(w => ({
+          wallets: newWallets.map(w => ({
             address: w.address,
             winrate: w.winrate,
             profit_7d: w.profit_7d || w.profit_30d || 0,
             profit_30d: w.profit_30d || 0,
-            active_days_30d: w.active_days_30d,
-            inner_play_count: w.inner_play_count_24h || (w.matched_tokens ? w.matched_tokens.length : 1),
+            active_days_30d: w.active_days_30d || 0,
+            inner_play_count: (w.matched_tokens ? w.matched_tokens.length : (w.inner_play_count_24h || 1)),
             matched_tokens: w.matched_tokens || [],
             tags: ["24h内盘高手"]
           }))
@@ -1249,14 +1339,28 @@
         });
         const res = await resp.json();
         if (res.success) {
-          showToast(`成功将 ${res.saved_count} 个聪明钱存入长期数据库！`);
+          newWallets.forEach(w => state.dbAddressSet.add(w.address.toLowerCase().trim()));
+          state.harvestedWallets.forEach(w => {
+            if (state.dbAddressSet.has(w.address.toLowerCase().trim())) {
+              w.is_saved = true;
+            }
+          });
+          renderWalletsList(state.harvestedWallets, state.totalHarvestedCount);
           loadDbWallets();
+
+          const skipped = selected.length - res.saved_count;
+          if (skipped > 0) {
+            showToast(`成功入库 ${res.saved_count} 个新钱包！（已自动跳过 ${skipped} 个已在库钱包，绝不重复入库）`);
+          } else {
+            showToast(`成功将 ${res.saved_count} 个新钱包存入长期数据库！已标橙高亮显示。`);
+          }
         }
       } catch (e) {
         showToast('批量入库失败: ' + e.message, false);
       }
     }
 
+    // ---------------- 长期数据库相关操作与状态管理 ----------------
     async function loadDbWallets() {
       const keyword = document.getElementById('dbSearchInput') ? document.getElementById('dbSearchInput').value : '';
       const orderBy = document.getElementById('dbOrderBy') ? document.getElementById('dbOrderBy').value : 'inner_play_count';
@@ -1265,14 +1369,312 @@
         const res = await resp.json();
         if (!res.success) return;
 
-        state.dbWallets = res.wallets || [];
+        // 保持之前的勾选状态
+        const prevSelected = new Set((state.dbWallets || []).filter(w => w.selected).map(w => w.address.toLowerCase().trim()));
+        
+        const fetchedWallets = (res.wallets || []).map(w => ({
+          ...w,
+          selected: prevSelected.has(w.address.toLowerCase().trim())
+        }));
+
+        state.dbWallets = fetchedWallets;
         document.getElementById('navDbCount').innerText = state.dbWallets.length;
         const totalCountEl = document.getElementById('dbTotalCount');
         if (totalCountEl) totalCountEl.innerText = `${state.dbWallets.length} 个`;
 
-        renderDbTable(state.dbWallets);
+        // 如果正处于不活跃钱包过滤模式，重新计算过滤子集
+        if (state.isFilteringInactive) {
+          state.dbFilteredWallets = state.dbWallets.filter(w => (w.active_days_30d || 0) < 15);
+          const bannerCountEl = document.getElementById('inactiveWalletCount');
+          if (bannerCountEl) bannerCountEl.innerText = state.dbFilteredWallets.length;
+          applyCurrentSortAndRender(state.dbFilteredWallets);
+        } else {
+          applyCurrentSortAndRender(state.dbWallets);
+        }
       } catch (e) {
         console.error('加载长期数据库失败', e);
+      }
+    }
+
+    // 辅助：对列表按当前设定的字段排序并渲染
+    function applyCurrentSortAndRender(list) {
+      let targetList = [...list];
+      if (state.dbSortField) {
+        targetList = sortDbWalletsList(targetList, state.dbSortField, state.dbSortDir);
+      }
+      renderDbTable(targetList);
+    }
+
+    function sortDbWalletsList(list, field, dir) {
+      return list.sort((a, b) => {
+        let valA = a[field] != null ? a[field] : 0;
+        let valB = b[field] != null ? b[field] : 0;
+        if (field === 'profit_7d') {
+          valA = (a.profit_7d != null && a.profit_7d !== 0) ? a.profit_7d : (a.profit_30d || 0);
+          valB = (b.profit_7d != null && b.profit_7d !== 0) ? b.profit_7d : (b.profit_30d || 0);
+        }
+        if (dir === 'asc') return valA - valB;
+        return valB - valA;
+      });
+    }
+
+    // 快捷排序：点击表头或快捷按钮切换胜率或7天利润排序
+    function toggleDbSort(field) {
+      if (state.dbSortField === field) {
+        if (state.dbSortDir === 'desc') {
+          state.dbSortDir = 'asc';
+        } else {
+          // 第三次点击切回默认
+          state.dbSortField = null;
+          state.dbSortDir = 'desc';
+        }
+      } else {
+        state.dbSortField = field;
+        state.dbSortDir = 'desc';
+      }
+
+      updateDbSortIndicators();
+      const currentList = state.isFilteringInactive ? state.dbFilteredWallets : state.dbWallets;
+      applyCurrentSortAndRender(currentList);
+
+      const fieldName = field === 'winrate' ? '胜率' : (field === 'profit_7d' ? '7天已实现利润' : field);
+      const dirName = state.dbSortField ? (state.dbSortDir === 'desc' ? '降序 (高→低)' : '升序 (低→高)') : '默认排序';
+      showToast(`已切换排序：按【${fieldName}】${dirName}`);
+    }
+
+    function updateDbSortIndicators() {
+      const thWinrate = document.getElementById('thSortWinrate');
+      const thProfit = document.getElementById('thSortProfit');
+      const btnWinrateInd = document.getElementById('quickSortWinrateIndicator');
+      const btnProfitInd = document.getElementById('quickSortProfitIndicator');
+
+      const btnWinrate = document.getElementById('btnQuickSortWinrate');
+      const btnProfit = document.getElementById('btnQuickSortProfit');
+
+      // 重置所有指示器
+      if (thWinrate) thWinrate.innerText = '↕';
+      if (thProfit) thProfit.innerText = '↕';
+      if (btnWinrateInd) btnWinrateInd.innerText = '↕';
+      if (btnProfitInd) btnProfitInd.innerText = '↕';
+
+      if (btnWinrate) {
+        btnWinrate.classList.remove('border-green-500', 'bg-green-500/10', 'text-green-400');
+        btnWinrate.classList.add('border-gray-700', 'bg-gray-900', 'text-gray-300');
+      }
+      if (btnProfit) {
+        btnProfit.classList.remove('border-green-500', 'bg-green-500/10', 'text-green-400');
+        btnProfit.classList.add('border-gray-700', 'bg-gray-900', 'text-gray-300');
+      }
+
+      if (state.dbSortField === 'winrate') {
+        const symbol = state.dbSortDir === 'desc' ? '↓高' : '↑低';
+        if (thWinrate) thWinrate.innerText = symbol;
+        if (btnWinrateInd) btnWinrateInd.innerText = symbol;
+        if (btnWinrate) {
+          btnWinrate.classList.add('border-green-500', 'bg-green-500/10', 'text-green-400');
+          btnWinrate.classList.remove('border-gray-700', 'bg-gray-900', 'text-gray-300');
+        }
+      } else if (state.dbSortField === 'profit_7d') {
+        const symbol = state.dbSortDir === 'desc' ? '↓高' : '↑低';
+        if (thProfit) thProfit.innerText = symbol;
+        if (btnProfitInd) btnProfitInd.innerText = symbol;
+        if (btnProfit) {
+          btnProfit.classList.add('border-green-500', 'bg-green-500/10', 'text-green-400');
+          btnProfit.classList.remove('border-gray-700', 'bg-gray-900', 'text-gray-300');
+        }
+      }
+    }
+
+    // 过滤不活跃钱包按键（超过15天无交易）
+    function toggleFilterInactiveWallets() {
+      if (!state.isFilteringInactive) {
+        // 筛选活跃天数 < 15 天的钱包
+        const inactive = (state.dbWallets || []).filter(w => (w.active_days_30d || 0) < 15);
+        if (inactive.length === 0) {
+          showToast('当前数据库中没有不活跃钱包（所有钱包月活跃天数均 ≥ 15天）', true);
+          return;
+        }
+
+        state.isFilteringInactive = true;
+        // 自动将过滤出的这批不活跃钱包全部勾选，便于确认删除
+        state.dbFilteredWallets = inactive.map(w => ({ ...w, selected: true }));
+        // 并在原 dbWallets 里同步 selected 状态
+        const inactiveSet = new Set(inactive.map(w => w.address.toLowerCase().trim()));
+        state.dbWallets.forEach(w => {
+          if (inactiveSet.has(w.address.toLowerCase().trim())) {
+            w.selected = true;
+          }
+        });
+
+        const banner = document.getElementById('dbInactiveBanner');
+        if (banner) banner.classList.remove('hidden');
+        const countEl = document.getElementById('inactiveWalletCount');
+        if (countEl) countEl.innerText = inactive.length;
+
+        const btnFilter = document.getElementById('btnFilterInactive');
+        if (btnFilter) {
+          btnFilter.classList.remove('bg-amber-500/10', 'border-amber-500/40', 'text-amber-300');
+          btnFilter.classList.add('bg-amber-500', 'text-black', 'border-amber-400', 'font-bold');
+        }
+
+        applyCurrentSortAndRender(state.dbFilteredWallets);
+        showToast(`已筛选出 ${inactive.length} 个不活跃钱包（月活跃<15天），已全部自动勾选。请核对后确认删除`);
+      } else {
+        resetDbFilterShowAll();
+      }
+    }
+
+    function resetDbFilterShowAll() {
+      state.isFilteringInactive = false;
+      const banner = document.getElementById('dbInactiveBanner');
+      if (banner) banner.classList.add('hidden');
+
+      const btnFilter = document.getElementById('btnFilterInactive');
+      if (btnFilter) {
+        btnFilter.classList.remove('bg-amber-500', 'text-black', 'border-amber-400', 'font-bold');
+        btnFilter.classList.add('bg-amber-500/10', 'border-amber-500/40', 'text-amber-300');
+      }
+
+      applyCurrentSortAndRender(state.dbWallets);
+      showToast('已取消过滤，显示长期数据库全部钱包');
+    }
+
+    // 确认删除不活跃钱包
+    async function confirmDeleteInactiveWallets() {
+      const inactive = (state.dbWallets || []).filter(w => (w.active_days_30d || 0) < 15);
+      if (inactive.length === 0) {
+        showToast('暂无可删除的不活跃钱包', false);
+        return;
+      }
+
+      const confirmed = confirm(`【操作删除确认】\n\n您确定要永久删除这 ${inactive.length} 个超过15天没有任何交易的不活跃钱包吗？\n\n删除后数据不可恢复！`);
+      if (!confirmed) return;
+
+      try {
+        const addresses = inactive.map(w => w.address);
+        const resp = await fetch('/api/db/wallets/batch-delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({addresses: addresses})
+        });
+        const res = await resp.json();
+        if (res.success) {
+          addresses.forEach(a => state.dbAddressSet.delete(a.toLowerCase().trim()));
+          state.isFilteringInactive = false;
+          const banner = document.getElementById('dbInactiveBanner');
+          if (banner) banner.classList.add('hidden');
+
+          const btnFilter = document.getElementById('btnFilterInactive');
+          if (btnFilter) {
+            btnFilter.classList.remove('bg-amber-500', 'text-black', 'border-amber-400', 'font-bold');
+            btnFilter.classList.add('bg-amber-500/10', 'border-amber-500/40', 'text-amber-300');
+          }
+
+          showToast(`已成功清理并删除 ${res.deleted_count} 个不活跃钱包！`);
+          loadDbWallets();
+        } else {
+          throw new Error(res.detail || '删除失败');
+        }
+      } catch (e) {
+        showToast('删除不活跃钱包失败: ' + e.message, false);
+      }
+    }
+
+    // 复选框全选/全不选联动
+    function toggleAllDbWallets(checked) {
+      const currentList = state.isFilteringInactive ? state.dbFilteredWallets : state.dbWallets;
+      currentList.forEach(w => w.selected = checked);
+
+      // 同步在主列表中记录
+      const currMap = new Map(currentList.map(w => [w.address.toLowerCase().trim(), checked]));
+      state.dbWallets.forEach(w => {
+        if (currMap.has(w.address.toLowerCase().trim())) {
+          w.selected = checked;
+        }
+      });
+
+      document.querySelectorAll('#dbTableBody input[type="checkbox"]').forEach(cb => cb.checked = checked);
+      const chkTop = document.getElementById('checkAllDbWallets');
+      if (chkTop) chkTop.checked = checked;
+      const chkBottom = document.getElementById('checkAllDbWalletsBottom');
+      if (chkBottom) chkBottom.checked = checked;
+
+      updateDbSelectedCount();
+    }
+
+    function onDbWalletCheckChange(address, checked) {
+      const lower = address.toLowerCase().trim();
+      const currentList = state.isFilteringInactive ? state.dbFilteredWallets : state.dbWallets;
+      const target = currentList.find(w => w.address.toLowerCase().trim() === lower);
+      if (target) {
+        target.selected = checked;
+      }
+      const inMain = state.dbWallets.find(w => w.address.toLowerCase().trim() === lower);
+      if (inMain) {
+        inMain.selected = checked;
+      }
+
+      updateDbSelectedCount();
+    }
+
+    function updateDbSelectedCount() {
+      const currentList = state.isFilteringInactive ? state.dbFilteredWallets : state.dbWallets;
+      const selected = currentList.filter(w => w.selected);
+
+      const countEl = document.getElementById('selectedDbWalletCount');
+      if (countEl) countEl.innerText = selected.length;
+
+      const totalEl = document.getElementById('totalDbWalletDisplayCount');
+      if (totalEl) totalEl.innerText = currentList.length;
+
+      const delCountEl = document.getElementById('deleteSelectedCount');
+      if (delCountEl) delCountEl.innerText = selected.length;
+
+      const btnBatch = document.getElementById('btnBatchDeleteDb');
+      if (btnBatch) {
+        if (selected.length > 0) {
+          btnBatch.disabled = false;
+        } else {
+          btnBatch.disabled = true;
+        }
+      }
+
+      const isAll = currentList.length > 0 && selected.length === currentList.length;
+      const chkTop = document.getElementById('checkAllDbWallets');
+      if (chkTop) chkTop.checked = isAll;
+      const chkBottom = document.getElementById('checkAllDbWalletsBottom');
+      if (chkBottom) chkBottom.checked = isAll;
+    }
+
+    // 批量删除已选钱包
+    async function batchDeleteSelectedDbWallets() {
+      const currentList = state.isFilteringInactive ? state.dbFilteredWallets : state.dbWallets;
+      const selected = currentList.filter(w => w.selected);
+      if (selected.length === 0) {
+        showToast('请先勾选要删除的钱包', false);
+        return;
+      }
+
+      const confirmed = confirm(`【批量删除确认】\n\n确定要从长期数据库中永久删除所选的 ${selected.length} 个钱包吗？\n\n此操作无法恢复！`);
+      if (!confirmed) return;
+
+      try {
+        const addresses = selected.map(w => w.address);
+        const resp = await fetch('/api/db/wallets/batch-delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({addresses: addresses})
+        });
+        const res = await resp.json();
+        if (res.success) {
+          addresses.forEach(a => state.dbAddressSet.delete(a.toLowerCase().trim()));
+          showToast(`已成功删除所选的 ${res.deleted_count} 个钱包！`);
+          loadDbWallets();
+        } else {
+          throw new Error(res.detail || '删除失败');
+        }
+      } catch (e) {
+        showToast('批量删除失败: ' + e.message, false);
       }
     }
 
@@ -1283,36 +1685,50 @@
 
       const emptyEl = document.getElementById('dbEmpty');
       const tableWrapper = document.getElementById('dbTableWrapper');
+      const footerBar = document.getElementById('dbFooterBar');
 
-      if (wallets.length === 0) {
+      if (!wallets || wallets.length === 0) {
         if (emptyEl) emptyEl.classList.remove('hidden');
         if (tableWrapper) tableWrapper.classList.add('hidden');
+        if (footerBar) footerBar.classList.add('hidden');
+        updateDbSelectedCount();
         return;
       }
       if (emptyEl) emptyEl.classList.add('hidden');
       if (tableWrapper) tableWrapper.classList.remove('hidden');
+      if (footerBar) footerBar.classList.remove('hidden');
 
       wallets.forEach(w => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-800/40 transition';
         const tokensStr = (w.matched_tokens || []).join(', ') || '-';
-        const pVal = w.profit_7d != null ? w.profit_7d : (w.profit_30d || 0);
+        const pVal = (w.profit_7d != null && w.profit_7d !== 0) ? w.profit_7d : (w.profit_30d || 0);
+        const isInactive = (w.active_days_30d || 0) < 15;
+
         tr.innerHTML = `
+          <td class="p-3 text-center">
+            <input type="checkbox" ${w.selected ? 'checked' : ''} onchange="onDbWalletCheckChange('${w.address}', this.checked)" class="rounded text-green-500 focus:ring-0 cursor-pointer">
+          </td>
           <td class="p-3 font-mono">
             <div class="flex items-center space-x-1.5">
               <span class="font-bold text-white">${w.address.slice(0, 8)}...${w.address.slice(-6)}</span>
-              <button onclick="copyText('${w.address}')" class="text-gray-500 hover:text-green-400" title="复制"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
-              <a href="${w.gmgn_url}" target="_blank" class="text-gray-500 hover:text-sky-400" title="GMGN"><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>
+              <button onclick="copyText('${w.address}')" class="text-gray-500 hover:text-green-400 transition" title="复制完整地址"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+              <a href="${w.gmgn_url}" target="_blank" class="text-gray-500 hover:text-sky-400 transition" title="查看 GMGN 战绩"><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>
             </div>
           </td>
           <td class="p-3">
             <span class="px-2 py-0.5 rounded-full font-mono text-xs bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">
-              ${w.inner_play_count} 次
+              ${w.inner_play_count || 0} 次
             </span>
           </td>
-          <td class="p-3 font-bold font-mono text-green-400">${w.winrate.toFixed(1)}%</td>
+          <td class="p-3 font-bold font-mono text-green-400">${(w.winrate || 0).toFixed(1)}%</td>
           <td class="p-3 font-bold font-mono ${pVal >= 0 ? 'text-green-400' : 'text-red-400'}">$${pVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-          <td class="p-3 font-mono text-gray-300">${w.active_days_30d} 天</td>
+          <td class="p-3 font-mono">
+            ${isInactive 
+              ? `<span class="px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold" title="月活跃天数少于15天，视同不活跃">${w.active_days_30d || 0} 天 (不活跃)</span>`
+              : `<span class="text-gray-300 font-bold">${w.active_days_30d || 0} 天</span>`
+            }
+          </td>
           <td class="p-3 text-gray-400 font-mono text-[11px]">${tokensStr}</td>
           <td class="p-3">
             <span onclick="editNote('${w.address}', '${escapeHtml(w.notes || '')}')" class="cursor-pointer text-gray-400 hover:text-white border-b border-dashed border-gray-600">
@@ -1320,11 +1736,13 @@
             </span>
           </td>
           <td class="p-3 text-right">
-            <button onclick="deleteDbWallet('${w.address}')" class="text-red-400 hover:text-red-300 p-1" title="删除"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <button onclick="deleteDbWallet('${w.address}')" class="text-red-400 hover:text-red-300 p-1 transition" title="删除该钱包"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+
+      updateDbSelectedCount();
       lucide.createIcons();
     }
 
@@ -1353,6 +1771,7 @@
         const resp = await fetch(`/api/db/wallets/${address}`, {method: 'DELETE'});
         const res = await resp.json();
         if (res.success) {
+          state.dbAddressSet.delete(address.toLowerCase().trim());
           showToast('已从长期数据库删除');
           loadDbWallets();
         }
@@ -1362,8 +1781,46 @@
     }
 
     function exportWallets(fmt) {
-      window.location.href = `/api/db/wallets/export?format=${fmt}`;
-      showToast(`正在导出 ${fmt.toUpperCase()} 格式文件...`);
+      if (state.currentView === 'page2') {
+        const selected = (state.harvestedWallets || []).filter(w => w.selected);
+        const list = selected.length > 0 ? selected : (state.harvestedWallets || []);
+        if (!list || list.length === 0) {
+          showToast('当前没有可导出的钱包数据，请先提取', false);
+          return;
+        }
+
+        if (fmt === 'newline') {
+          const text = list.map(w => w.address).join('\n');
+          const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `robinhood_wallets_${list.length}.txt`;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast(`已成功导出 ${list.length} 个钱包地址（TG监控格式）`);
+        } else if (fmt === 'csv') {
+          let csv = '钱包地址,命中内盘代币数,命中代币列表,GMGN胜率(%),7D已实现利润($),月交易天数,是否已在库,GMGN链接\n';
+          list.forEach(w => {
+            const tokenList = (w.matched_tokens || []).join('; ');
+            const tokenCount = w.matched_tokens ? w.matched_tokens.length : (w.inner_play_count_24h || 1);
+            const p = (w.profit_7d != null && w.profit_7d !== 0) ? w.profit_7d : (w.profit_30d || 0);
+            const savedStr = w.is_saved ? '已在库' : '未入库';
+            csv += `"${w.address}",${tokenCount},"${tokenList}",${(w.winrate || 0).toFixed(1)},${p},${w.active_days_30d || 0},"${savedStr}","${w.gmgn_url || ''}"\n`;
+          });
+          const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `robinhood_smart_wallets_${list.length}.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast(`已成功导出 ${list.length} 个钱包的 CSV 报表！`);
+        }
+      } else {
+        window.location.href = `/api/db/wallets/export?format=${fmt}`;
+        showToast(`正在导出长期数据库 ${fmt.toUpperCase()} 格式文件...`);
+      }
     }
 
     function copyText(text) {

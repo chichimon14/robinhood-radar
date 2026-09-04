@@ -67,8 +67,8 @@ class Database:
         conn.row_factory = sqlite3.Row
         return conn
 
-    def save_wallet(self, wallet_data: Dict[str, Any]) -> bool:
-        """保存或更新钱包"""
+    def save_wallet(self, wallet_data: Dict[str, Any], only_new: bool = False) -> bool:
+        """保存或更新钱包，若 only_new 为 True 则已存在时不重复写入"""
         conn = self._get_conn()
         cursor = conn.cursor()
         addr = wallet_data["address"].lower().strip()
@@ -77,6 +77,11 @@ class Database:
         # 检查是否已存在
         cursor.execute("SELECT first_seen_at, notes, tags FROM saved_wallets WHERE address = ?", (addr,))
         row = cursor.fetchone()
+
+        if only_new and row:
+            # 严格去重：已入库过，绝不重复入库
+            conn.close()
+            return False
 
         first_seen = row["first_seen_at"] if row else now
         existing_notes = row["notes"] if row and row["notes"] else wallet_data.get("notes", "")
@@ -138,12 +143,26 @@ class Database:
         conn.close()
         return True
 
-    def batch_save_wallets(self, wallets: List[Dict[str, Any]]) -> int:
-        count = 0
+    def batch_save_wallets(self, wallets: List[Dict[str, Any]], only_new: bool = True) -> Dict[str, int]:
+        """批量保存钱包，支持智能去重统计"""
+        saved_count = 0
+        skipped_count = 0
         for w in wallets:
-            if self.save_wallet(w):
-                count += 1
-        return count
+            if self.save_wallet(w, only_new=only_new):
+                saved_count += 1
+            else:
+                skipped_count += 1
+        return {"saved_count": saved_count, "skipped_count": skipped_count}
+
+    def get_all_saved_addresses(self) -> List[str]:
+        """获取所有已入库的钱包地址（小写）"""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT address FROM saved_wallets")
+        rows = cursor.fetchall()
+        addrs = [r["address"].lower() for r in rows if r["address"]]
+        conn.close()
+        return addrs
 
     def get_saved_wallets(self, keyword: str = "", order_by: str = "inner_play_count", direction: str = "desc") -> List[Dict[str, Any]]:
         conn = self._get_conn()
@@ -222,6 +241,19 @@ class Database:
         cursor.execute("DELETE FROM saved_wallets WHERE address = ?", (address.lower().strip(),))
         conn.commit()
         affected = cursor.rowcount > 0
+        conn.close()
+        return affected
+
+    def batch_delete_wallets(self, addresses: List[str]) -> int:
+        if not addresses:
+            return 0
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        clean_addrs = [a.lower().strip() for a in addresses if a]
+        placeholders = ",".join(["?"] * len(clean_addrs))
+        cursor.execute(f"DELETE FROM saved_wallets WHERE address IN ({placeholders})", clean_addrs)
+        conn.commit()
+        affected = cursor.rowcount
         conn.close()
         return affected
 

@@ -69,6 +69,9 @@ class SaveWalletRequest(BaseModel):
 class BatchSaveWalletsRequest(BaseModel):
     wallets: List[Dict[str, Any]]
 
+class BatchDeleteWalletsRequest(BaseModel):
+    addresses: List[str]
+
 class UpdateWalletNoteRequest(BaseModel):
     notes: Optional[str] = None
     tags: Optional[List[str]] = None
@@ -150,21 +153,34 @@ def compute_frequency_rank(req: FrequencyRankRequest):
 
 # ----------------- 长期数据库持久化接口 -----------------
 
+@app.get("/api/db/wallets/addresses")
+def get_saved_wallet_addresses():
+    """获取长期数据库中所有已保存的钱包地址（去重与前端高亮匹配）"""
+    try:
+        addresses = db.get_all_saved_addresses()
+        return {"success": True, "addresses": addresses, "total": len(addresses)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取已保存地址失败: {str(e)}")
+
 @app.post("/api/db/wallets/save")
 def save_wallet_to_db(req: SaveWalletRequest):
     """保存单个钱包到长期数据库"""
     try:
-        ok = db.save_wallet(req.wallet)
+        ok = db.save_wallet(req.wallet, only_new=False)
         return {"success": ok}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"保存失败: {str(e)}")
 
 @app.post("/api/db/wallets/batch-save")
 def batch_save_wallets_to_db(req: BatchSaveWalletsRequest):
-    """批量保存选中的聪明钱包到长期数据库"""
+    """批量保存选中的聪明钱包到长期数据库，严格防重复入库"""
     try:
-        count = db.batch_save_wallets(req.wallets)
-        return {"success": True, "saved_count": count}
+        res = db.batch_save_wallets(req.wallets, only_new=True)
+        return {
+            "success": True,
+            "saved_count": res["saved_count"],
+            "skipped_count": res["skipped_count"]
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"批量保存失败: {str(e)}")
 
@@ -180,6 +196,15 @@ def get_db_wallets(
         return {"success": True, "wallets": wallets, "total": len(wallets)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"查询数据库失败: {str(e)}")
+
+@app.post("/api/db/wallets/batch-delete")
+def batch_delete_db_wallets(req: BatchDeleteWalletsRequest):
+    """批量从长期数据库中删除钱包"""
+    try:
+        deleted = db.batch_delete_wallets(req.addresses)
+        return {"success": True, "deleted_count": deleted}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"批量删除钱包失败: {str(e)}")
 
 @app.put("/api/db/wallets/{address}")
 def update_db_wallet(address: str, req: UpdateWalletNoteRequest):
